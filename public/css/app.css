@@ -1,0 +1,625 @@
+/* ==========================================================================
+   VCALL — PREMIUM TELECOM & MESSAGING DESIGN SYSTEM
+   Theme: Modern Glassmorphic Slate & Vivid Accents (imo & Telegram inspired)
+   ========================================================================== */
+
+:root {
+  --primary-accent: #2563eb;
+  --primary-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  --success-accent: #10b981;
+  --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --danger-accent: #ef4444;
+  --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  --surface-dark: #0f172a;
+  --surface-card: #1e293b;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-light: #e2e8f0;
+  --app-radius: 24px;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e1b4b 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  color: var(--text-main);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Main Mobile App Frame */
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow-x: hidden;
+}
+
+@media (min-width: 576px) {
+  .app-container {
+    min-height: 94vh;
+    height: 94vh;
+    border-radius: var(--app-radius);
+    margin: 3vh auto;
+  }
+}
+
+/* ==========================================================================
+   TOP APP HEADER
+   ========================================================================== */
+.app-header {
+  padding: 16px 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--primary-gradient);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  position: relative;
+}
+
+/* ==========================================================================
+   HERO VIRTUAL NUMBER CARD (Glassmorphic Dark Mode Card)
+   ========================================================================== */
+.hero-number-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 20px;
+  padding: 20px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.3), 0 8px 10px -6px rgba(15, 23, 42, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 14px 16px;
+}
+
+.hero-number-card::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-number-display {
+  font-family: 'SF Pro Display', -apple-system, monospace;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg, #ffffff 0%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+  margin: 4px 0 12px;
+}
+
+.glass-action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.glass-action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.glass-action-btn:active {
+  transform: scale(0.95);
+}
+
+/* ==========================================================================
+   DIALPAD DESIGN (Refined Apple / Pixel Tactile Touch)
+   ========================================================================== */
+.dialpad-input-container {
+  background: #f8fafc;
+  border-radius: 18px;
+  border: 1.5px solid #e2e8f0;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.dialpad-input-container:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.dial-input {
+  border: none;
+  background: transparent;
+  font-family: 'SF Pro Display', -apple-system, monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+  width: 100%;
+  letter-spacing: 2px;
+}
+
+.dial-input:focus {
+  outline: none;
+}
+
+.dial-btn {
+  height: 68px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  position: relative;
+}
+
+.dial-btn span {
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.dial-btn sub {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.dial-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.dial-btn:active {
+  transform: scale(0.92);
+  background: #e2e8f0;
+}
+
+/* Call Trigger Buttons */
+.call-btn-voice {
+  background: var(--success-gradient);
+  color: #ffffff;
+  border-radius: 18px;
+  padding: 14px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35);
+  transition: all 0.2s ease;
+}
+
+.call-btn-voice:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.call-btn-video {
+  background: var(--primary-gradient);
+  color: #ffffff;
+  border-radius: 18px;
+  padding: 14px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+  transition: all 0.2s ease;
+}
+
+.call-btn-video:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+/* ==========================================================================
+   NAVIGATION BAR (Native Mobile Dock Style)
+   ========================================================================== */
+.nav-pills-custom {
+  background: #f1f5f9;
+  padding: 6px;
+  border-radius: 16px;
+  margin: 0 16px 16px;
+}
+
+.nav-pills-custom .nav-link {
+  border-radius: 12px;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.nav-pills-custom .nav-link.active {
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ==========================================================================
+   LIST ITEMS (CHATS, RECENTS, CONTACTS)
+   ========================================================================== */
+.list-item-custom {
+  padding: 12px 16px;
+  border-radius: 16px;
+  margin-bottom: 6px;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+}
+
+.list-item-custom:hover {
+  background: #f8fafc;
+  border-color: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+.peer-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.25rem;
+  position: relative;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.peer-avatar .avatar-online-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 13px;
+  height: 13px;
+  background: #10b981;
+  border: 2.5px solid #ffffff;
+  border-radius: 50%;
+}
+
+/* ==========================================================================
+   IMO-STYLE FULLSCREEN INCOMING CALL SCREEN
+   ========================================================================== */
+#imoIncomingCallScreen {
+  z-index: 2500;
+  background: radial-gradient(circle at center, #1e293b 0%, #090d16 100%);
+  position: fixed;
+  inset: 0;
+}
+
+.ripple-avatar-container {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ripple-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(16, 185, 129, 0.6);
+  animation: pulseRings 2.4s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+  pointer-events: none;
+}
+
+.ripple-ring:nth-child(1) { width: 140px; height: 140px; animation-delay: 0s; }
+.ripple-ring:nth-child(2) { width: 140px; height: 140px; animation-delay: 0.8s; }
+.ripple-ring:nth-child(3) { width: 140px; height: 140px; animation-delay: 1.6s; }
+
+@keyframes pulseRings {
+  0% {
+    width: 130px;
+    height: 130px;
+    opacity: 0.9;
+    border-color: rgba(16, 185, 129, 0.8);
+  }
+  100% {
+    width: 320px;
+    height: 320px;
+    opacity: 0;
+    border-color: rgba(37, 99, 235, 0);
+  }
+}
+
+.imo-avatar {
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #00d2ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 8px 32px rgba(37, 99, 235, 0.5);
+  position: relative;
+  z-index: 2;
+}
+
+.glow-btn-accept {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #10b981;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.7);
+  animation: btnPulseAccept 1.6s infinite ease-in-out;
+  border: none;
+}
+
+.glow-btn-reject {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.7);
+  border: none;
+}
+
+@keyframes btnPulseAccept {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(16, 185, 129, 0.7); }
+  50% { transform: scale(1.08); box-shadow: 0 0 35px rgba(16, 185, 129, 0.95); }
+}
+
+/* ==========================================================================
+   ACTIVE IN-CALL SCREEN & FLOATING PiP
+   ========================================================================== */
+#callScreen {
+  z-index: 2200;
+  background: #000000;
+  position: fixed;
+  inset: 0;
+}
+
+#remoteVideo {
+  background: #090d16;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#localVideo {
+  z-index: 2220;
+  width: 125px;
+  height: 180px;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.75);
+  border-radius: 18px;
+  background: #111;
+  transition: all 0.2s ease;
+}
+
+.call-control-dock {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  border-radius: 36px;
+  padding: 10px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.call-control-btn {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  border: none;
+  transition: transform 0.15s ease;
+}
+
+.call-control-btn:active {
+  transform: scale(0.9);
+}
+
+/* Sound wave animation for Voice calls */
+.sound-wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 50px;
+}
+
+.sound-wave span {
+  display: block;
+  width: 5px;
+  height: 12px;
+  background: #3b82f6;
+  border-radius: 4px;
+  animation: waveAnimation 1.2s infinite ease-in-out;
+}
+
+.sound-wave span:nth-child(2) { animation-delay: 0.15s; }
+.sound-wave span:nth-child(3) { animation-delay: 0.3s; }
+.sound-wave span:nth-child(4) { animation-delay: 0.45s; }
+.sound-wave span:nth-child(5) { animation-delay: 0.6s; }
+
+@keyframes waveAnimation {
+  0%, 100% { height: 10px; background: #3b82f6; }
+  50% { height: 42px; background: #00d2ff; }
+}
+
+/* ==========================================================================
+   TELEGRAM-STYLE CHAT OFFCANVAS & EMOJIS
+   ========================================================================== */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #f8fafc;
+  background-image: radial-gradient(#cbd5e1 0.8px, transparent 0.8px);
+  background-size: 16px 16px;
+}
+
+.chat-bubble {
+  max-width: 82%;
+  padding: 10px 16px;
+  border-radius: 20px;
+  word-break: break-word;
+  position: relative;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.chat-bubble.mine {
+  align-self: flex-end;
+  background: var(--primary-gradient);
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble.theirs {
+  align-self: flex-start;
+  background-color: #ffffff;
+  color: #0f172a;
+  border-bottom-left-radius: 4px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.telegram-big-emoji {
+  font-size: 3.4rem;
+  line-height: 1.1;
+  display: inline-block;
+  animation: telegramEmojiPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-origin: center bottom;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+@keyframes telegramEmojiPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  75% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.voice-wave-container span {
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 3px;
+  transition: height 0.1s ease;
+}
+
+.theirs .voice-wave-container span {
+  background: #94a3b8;
+}
+
+.playing-bars span {
+  animation: voiceWavePlay 0.8s infinite ease-in-out;
+}
+
+.playing-bars span:nth-child(2n) { animation-delay: 0.15s; }
+.playing-bars span:nth-child(3n) { animation-delay: 0.3s; }
+.playing-bars span:nth-child(4n) { animation-delay: 0.45s; }
+
+@keyframes voiceWavePlay {
+  0%, 100% { height: 8px; }
+  50% { height: 26px; }
+}
+
+.pulse-red-record {
+  width: 12px;
+  height: 12px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulseRecord 1s infinite alternate;
+}
+
+@keyframes pulseRecord {
+  0% { transform: scale(0.9); opacity: 0.5; }
+  100% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 10px #ef4444; }
+}
+
+.emoji-grid-item {
+  transition: transform 0.12s ease;
+}
+
+.emoji-grid-item:hover {
+  transform: scale(1.25);
+}
+
+.presence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+.presence-online { background-color: #10b981; }
+.presence-incall { background-color: #f59e0b; }
+.presence-offline { background-color: #94a3b8; }
