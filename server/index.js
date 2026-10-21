@@ -18,6 +18,9 @@ const { attachHub } = require('./ws/hub');
 const app = express();
 const PORT = process.env.PORT || 2083;
 
+// Enable proxy trust for Nginx / Cloudflare reverse proxy
+app.set('trust proxy', 1);
+
 // Security Middleware
 app.use(
   helmet({

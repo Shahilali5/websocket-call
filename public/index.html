@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
-  <title>VCall — Zero-Login Virtual Number Calling & Encrypted Chat</title>
-  <meta name="description" content="Instant 10-Digit Virtual Line, WebRTC HD Calling, End-to-End Encrypted Chat & Voice Notes">
+  <title>V Call — Connect. Talk. Be Together.</title>
+  <meta name="description" content="Instant Virtual Line, HD Video Calling, End-to-End Encrypted Telegram-style Chat & Voice Notes">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#040a17">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -17,517 +17,625 @@
 </head>
 <body>
 
-<div class="app-container">
-  <!-- PWA Install Banner (Mobile Promoted) -->
-  <div id="pwaInstallBanner" class="d-none bg-gradient-primary text-white px-3 py-2 d-flex align-items-center justify-content-between shadow-sm">
-    <div class="d-flex align-items-center gap-2 small">
-      <i class="bi bi-phone-fill fs-5"></i>
-      <span>Install <b>VCall</b> for background ringing & lockscreen call alerts!</span>
-    </div>
-    <div class="d-flex gap-2">
-      <button id="btnPwaBannerInstall" class="btn btn-sm btn-light fw-bold rounded-pill px-3 py-1">Install</button>
-      <button id="btnPwaBannerDismiss" class="btn btn-sm text-white-50 p-0"><i class="bi bi-x-lg"></i></button>
-    </div>
-  </div>
+<div class="app-container" id="appMainFrame">
 
-  <!-- Top App Header -->
-  <header class="app-header">
-    <div class="d-flex align-items-center gap-3">
-      <div id="userAvatar" class="brand-avatar position-relative overflow-hidden cursor-pointer" data-bs-toggle="modal" data-bs-target="#settingsModal" title="Change Profile Photo">
-        <img id="userAvatarImg" class="w-100 h-100 object-fit-cover d-none" alt="Avatar" />
-        <span id="userAvatarText">V</span>
-      </div>
-      <div>
-        <div class="d-flex align-items-center gap-2">
-          <h6 class="mb-0 fw-bold fs-5 text-dark" id="userName">Guest</h6>
-          <button class="btn btn-sm btn-link p-0 text-decoration-none text-muted" data-bs-toggle="modal" data-bs-target="#customNumberModal" title="Edit Name & Number">
-            <i class="bi bi-pencil-square" style="font-size: 0.85rem;"></i>
-          </button>
-        </div>
-        <div class="d-flex align-items-center gap-1 mt-1">
-          <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-0 px-2" style="font-size:0.65rem;">
-            <span class="presence-dot presence-online"></span>Live Active
-          </span>
-          <span class="badge bg-warning-subtle text-dark border border-warning-subtle rounded-pill py-0 px-2" style="font-size:0.65rem;">
-            <i class="bi bi-shield-lock-fill text-warning me-1"></i>E2EE
-          </span>
-        </div>
+  <!-- ======================================================================= -->
+  <!-- SCREEN 1: HOME & RECENT CALLS DASHBOARD                                 -->
+  <!-- ======================================================================= -->
+  <div id="viewHomeDashboard" class="d-flex flex-column h-100 w-100">
+    
+    <!-- Status Bar Spacer (Mobile clock & battery) -->
+    <div class="status-bar-spacer">
+      <span id="statusBarClock">9:41</span>
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-reception-4"></i>
+        <i class="bi bi-wifi"></i>
+        <span class="small fw-bold">100%</span>
+        <i class="bi bi-battery-full fs-6"></i>
       </div>
     </div>
-    <div class="d-flex gap-2 align-items-center">
-      <button id="btnPwaInstall" class="btn btn-sm btn-outline-success rounded-pill px-2.5 fw-semibold d-none" title="Install App on Phone">
-        <i class="bi bi-download me-1"></i> App
+
+    <!-- Top App Header -->
+    <header class="app-header">
+      <div class="brand-wrapper">
+        <div class="brand-icon-3d">
+          <i class="bi bi-chat-fill"></i>
+        </div>
+        <div>
+          <h1 class="brand-title"><span class="v-accent">V</span> Call</h1>
+          <p class="brand-subtitle">Connect. Talk. Be Together.</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btnHeaderSearch" class="icon-btn-ghost" title="Search">
+          <i class="bi bi-search"></i>
+        </button>
+        <button id="btnHeaderNotifications" class="icon-btn-ghost" title="Notifications">
+          <i class="bi bi-bell-fill"></i>
+          <span class="unread-dot"></span>
+        </button>
+        <div id="headerUserAvatar" class="header-avatar" title="My Profile (Line Settings)">
+          <img id="headerAvatarImg" class="w-100 h-100 object-fit-cover d-none" />
+          <span id="headerAvatarText">V</span>
+          <span class="online-badge"></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Search Bar Pill -->
+    <div class="search-container">
+      <div class="search-pill">
+        <i class="bi bi-search"></i>
+        <input type="text" id="mainSearchInput" class="search-input" placeholder="Search contacts or phone number...">
+        <button id="btnClearSearch" class="btn btn-sm text-white-50 p-0 d-none"><i class="bi bi-x-circle-fill"></i></button>
+      </div>
+    </div>
+
+    <!-- 4 Bento Quick Action Cards -->
+    <section class="bento-grid">
+      <div class="bento-card" id="btnBentoVideoCall" title="Instant Video Call">
+        <div class="bento-icon-box bento-blue">
+          <i class="bi bi-camera-video-fill"></i>
+        </div>
+        <h6 class="bento-title">Video Call</h6>
+        <p class="bento-sub">Face to face</p>
+      </div>
+      <div class="bento-card" id="btnBentoVoiceCall" title="HD Audio Call">
+        <div class="bento-icon-box bento-cyan">
+          <i class="bi bi-telephone-fill"></i>
+        </div>
+        <h6 class="bento-title">Voice Call</h6>
+        <p class="bento-sub">High quality</p>
+      </div>
+      <div class="bento-card" id="btnBentoGroupCall" title="Group Call (Room)">
+        <div class="bento-icon-box bento-purple">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <h6 class="bento-title">Group Call</h6>
+        <p class="bento-sub">Up to 50 people</p>
+      </div>
+      <div class="bento-card" id="btnBentoAddContact" title="Add Contact">
+        <div class="bento-icon-box bento-teal">
+          <i class="bi bi-plus-lg"></i>
+        </div>
+        <h6 class="bento-title">Add Contact</h6>
+        <p class="bento-sub">Find friends</p>
+      </div>
+    </section>
+
+    <!-- Recent Calls Section Header -->
+    <div class="section-header">
+      <h5 class="section-title">Recent Calls</h5>
+      <a class="section-action" id="btnSeeAllCalls">See All <i class="bi bi-chevron-right small"></i></a>
+    </div>
+
+    <!-- Recent Calls Dynamic Scroll List -->
+    <div class="recent-calls-scroll" id="recentCallsList">
+      <!-- Demo list matching Screen 1 reference, automatically enriched with real live call data -->
+      <div class="call-item-row" data-number="7384920155" data-name="Best Friend 💙">
+        <div class="call-item-left">
+          <div class="call-avatar">
+            <span class="text-info fw-bold">BF</span>
+            <span class="online-badge"></span>
+          </div>
+          <div class="call-details">
+            <h6 class="call-name">Best Friend 💙</h6>
+            <div class="call-meta"><i class="bi bi-camera-video-fill text-primary"></i> Video call &bull; 2 min ago</div>
+          </div>
+        </div>
+        <button class="call-btn-action btn-action-video" data-call-type="video" title="Video Call"><i class="bi bi-camera-video-fill"></i></button>
+      </div>
+
+      <div class="call-item-row" data-number="8849201551" data-name="Sister ❤️">
+        <div class="call-item-left">
+          <div class="call-avatar">
+            <span class="text-danger fw-bold">S</span>
+          </div>
+          <div class="call-details">
+            <h6 class="call-name">Sister ❤️</h6>
+            <div class="call-meta"><i class="bi bi-telephone-fill text-success"></i> Voice call &bull; 12 min ago</div>
+          </div>
+        </div>
+        <button class="call-btn-action btn-action-voice" data-call-type="voice" title="Voice Call"><i class="bi bi-telephone-fill"></i></button>
+      </div>
+
+      <div class="call-item-row" data-number="9998887777" data-name="Gaming Squad">
+        <div class="call-item-left">
+          <div class="call-avatar" style="background: #1e1b4b;">
+            <i class="bi bi-controller text-info"></i>
+          </div>
+          <div class="call-details">
+            <h6 class="call-name">Gaming Squad</h6>
+            <div class="call-meta"><i class="bi bi-people-fill text-primary"></i> Group call &bull; 1 hr ago</div>
+          </div>
+        </div>
+        <button class="call-btn-action btn-action-group" data-call-type="group" title="Group Call"><i class="bi bi-people-fill"></i></button>
+      </div>
+
+      <div class="call-item-row" data-number="6628193840" data-name="Pranav">
+        <div class="call-item-left">
+          <div class="call-avatar">
+            <span class="text-warning fw-bold">P</span>
+            <span class="online-badge"></span>
+          </div>
+          <div class="call-details">
+            <h6 class="call-name">Pranav</h6>
+            <div class="call-meta missed"><i class="bi bi-telephone-x-fill text-danger"></i> Missed call &bull; 3 hr ago</div>
+          </div>
+        </div>
+        <button class="call-btn-action btn-action-voice" data-call-type="voice" title="Call Back"><i class="bi bi-telephone-fill"></i></button>
+      </div>
+
+      <div class="call-item-row" data-number="9876543210" data-name="Riya 💕">
+        <div class="call-item-left">
+          <div class="call-avatar">
+            <span class="text-pink fw-bold" style="color:#f43f5e;">R</span>
+          </div>
+          <div class="call-details">
+            <h6 class="call-name">Riya 💕</h6>
+            <div class="call-meta"><i class="bi bi-telephone-fill text-success"></i> Voice call &bull; 5 hr ago</div>
+          </div>
+        </div>
+        <button class="call-btn-action btn-action-voice" data-call-type="voice" title="Voice Call"><i class="bi bi-telephone-fill"></i></button>
+      </div>
+
+      <div class="call-item-row" data-number="5544332211" data-name="Armaan">
+        <div class="call-item-left">
+          <div class="call-avatar">
+            <span class="text-primary fw-bold">A</span>
+          </div>
+          <div class="call-details">
+            <h6 class="call-name">Armaan</h6>
+            <div class="call-meta"><i class="bi bi-camera-video-fill text-primary"></i> Video call &bull; 8 hr ago</div>
+          </div>
+        </div>
+        <button class="call-btn-action btn-action-video" data-call-type="video" title="Video Call"><i class="bi bi-camera-video-fill"></i></button>
+      </div>
+    </div>
+
+    <!-- Floating Cyan 9-Dot Dialpad Action Button -->
+    <button class="fab-dialpad" id="fabOpenDialpad" title="Open Dialpad">
+      <i class="bi bi-grid-3x3-gap-fill"></i>
+    </button>
+
+    <!-- Bottom Navigation Dock -->
+    <nav class="bottom-nav-dock">
+      <button class="nav-tab-btn active" id="tabBtnHome">
+        <i class="bi bi-house-door-fill"></i>
+        <span>Home</span>
       </button>
-      <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#shareModal" title="Share My Call Line">
-        <i class="bi bi-qr-code me-1"></i> Share
+      <button class="nav-tab-btn" id="tabBtnChats">
+        <i class="bi bi-chat-dots-fill"></i>
+        <span>Chats</span>
+        <span class="badge-counter">2</span>
       </button>
-      <button class="btn btn-sm btn-light border rounded-circle shadow-sm" data-bs-toggle="modal" data-bs-target="#settingsModal" title="Profile Settings">
+      <button class="nav-tab-btn" id="tabBtnContacts">
+        <i class="bi bi-people-fill"></i>
+        <span>Contacts</span>
+      </button>
+      <button class="nav-tab-btn" id="tabBtnSettings">
         <i class="bi bi-gear-fill"></i>
+        <span>Settings</span>
       </button>
-    </div>
-  </header>
+    </nav>
+  </div>
 
-  <!-- Hero Virtual Number Card -->
-  <section class="hero-number-card">
-    <div class="d-flex justify-content-between align-items-center mb-1">
-      <small class="text-uppercase fw-bold text-white-50" style="letter-spacing: 1.5px; font-size: 0.7rem;">
-        Your Active Virtual Number
-      </small>
-      <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50 rounded-pill px-2" style="font-size: 0.65rem;">
-        Instant Line
-      </span>
-    </div>
-    <div id="myNumber" class="hero-number-display">- - - -</div>
-    <div class="d-flex flex-wrap gap-2">
-      <button id="copyBtn" class="glass-action-btn">
-        <i class="bi bi-clipboard me-1.5"></i> Copy
-      </button>
-      <button class="glass-action-btn text-info" data-bs-toggle="modal" data-bs-target="#customNumberModal">
-        <i class="bi bi-stars me-1.5"></i> Custom VIP No.
-      </button>
-      <button class="glass-action-btn text-white-50" data-bs-toggle="modal" data-bs-target="#shareModal">
-        <i class="bi bi-share me-1.5"></i> Share QR
-      </button>
-      <button id="btnRollNewNumber" class="glass-action-btn text-warning" title="Get a fresh 10-digit number">
-        <i class="bi bi-dice-5 me-1.5"></i> Roll New
-      </button>
-    </div>
-  </section>
-
-  <!-- Main Navigation Tabs -->
-  <ul class="nav nav-pills nav-fill nav-pills-custom" id="pills-tab" role="tablist">
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="pills-dial-tab" data-bs-toggle="pill" data-bs-target="#tabDial" type="button" role="tab">
-        <i class="bi bi-grid-3x3-gap-fill me-1"></i> Dial
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="pills-chats-tab" data-bs-toggle="pill" data-bs-target="#tabChats" type="button" role="tab">
-        <i class="bi bi-chat-dots-fill me-1"></i> Chats
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="pills-recents-tab" data-bs-toggle="pill" data-bs-target="#tabRecents" type="button" role="tab">
-        <i class="bi bi-clock-history me-1"></i> Recents
-      </button>
-    </li>
-    <li class="nav-item" role="presentation">
-      <button class="nav-link" id="pills-contacts-tab" data-bs-toggle="pill" data-bs-target="#tabContacts" type="button" role="tab">
-        <i class="bi bi-people-fill me-1"></i> Contacts
-      </button>
-    </li>
-  </ul>
-
-  <!-- Tab Contents -->
-  <main class="tab-content flex-grow-1 px-3 pb-3" id="pills-tabContent">
-    <!-- DIALPAD TAB -->
-    <div class="tab-pane fade show active" id="tabDial" role="tabpanel">
-      <div class="dialpad-input-container">
-        <input id="dialInput" class="dial-input" placeholder="0000 0000 00" inputmode="numeric" maxlength="10">
-        <div id="dialPeerStatus" class="text-center text-muted small mt-1" style="font-size: 0.75rem;">
-          Enter 10-digit number to call or chat
+  <!-- ======================================================================= -->
+  <!-- SCREEN 2 & 3: TELEGRAM-STYLE 1-ON-1 & GROUP CHAT VIEW                    -->
+  <!-- ======================================================================= -->
+  <div id="viewChatScreen" class="chat-screen-view d-none">
+    
+    <!-- Chat Header -->
+    <div class="chat-header">
+      <div class="d-flex align-items-center gap-2">
+        <button id="btnChatBack" class="btn btn-sm text-white p-0 me-1"><i class="bi bi-arrow-left fs-4"></i></button>
+        <div class="chat-header-user" id="chatHeaderPeerInfo">
+          <div class="call-avatar" style="width: 42px; height: 42px;">
+            <img id="chatHeaderAvatarImg" class="w-100 h-100 object-fit-cover d-none" />
+            <span id="chatHeaderAvatarText" class="text-white fw-bold">R</span>
+            <span class="online-badge"></span>
+          </div>
+          <div>
+            <h6 class="chat-header-name" id="chatHeaderName">Riya 💙</h6>
+            <div class="chat-header-status" id="chatHeaderStatus">online</div>
+          </div>
         </div>
       </div>
-      <div class="row g-2 mb-3" id="keys">
-        <!-- Dynamically injected by dialpad.js -->
-      </div>
-      <div class="d-flex gap-2">
-        <button id="btnVoice" class="btn call-btn-voice flex-fill">
-          <i class="bi bi-telephone-fill me-1"></i> Call
-        </button>
-        <button id="btnVideo" class="btn call-btn-video flex-fill">
-          <i class="bi bi-camera-video-fill me-1"></i> Video
-        </button>
-        <button id="btnChat" class="btn btn-light border px-4 rounded-4 fs-5 text-secondary shadow-sm" title="Open Chat">
-          <i class="bi bi-chat-dots-fill"></i>
-        </button>
+      <div class="d-flex align-items-center gap-2">
+        <button id="btnChatStartVideo" class="icon-btn-ghost" title="Start Video Call"><i class="bi bi-camera-video-fill"></i></button>
+        <button id="btnChatStartVoice" class="icon-btn-ghost" title="Start Voice Call"><i class="bi bi-telephone-fill"></i></button>
+        <button id="btnChatMenu" class="icon-btn-ghost" title="More Options"><i class="bi bi-three-dots-vertical"></i></button>
       </div>
     </div>
 
-    <!-- CHATS TAB -->
-    <div class="tab-pane fade" id="tabChats" role="tabpanel">
-      <div id="chatList" class="overflow-hidden">
-        <div class="text-center text-muted py-5"><small>Loading conversations...</small></div>
+    <!-- Pinned Message Banner -->
+    <div class="pinned-banner" id="chatPinnedBanner">
+      <div class="d-flex align-items-center gap-2 text-truncate">
+        <i class="bi bi-pin-angle-fill text-primary"></i>
+        <div>
+          <span class="text-primary fw-bold" style="font-size: 0.72rem;">Pinned Message</span>
+          <div class="text-white-50 text-truncate" id="pinnedBannerText">Tomorrow 8 PM &ndash; BGMI Custom Room 🔥</div>
+        </div>
+      </div>
+      <button id="btnDismissPin" class="btn btn-sm text-white-50 p-0"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <!-- Messages Scroll Area -->
+    <div class="chat-scroll-area" id="chatMessagesArea">
+      <!-- Demo messages matching Screen 2 reference -->
+      <div class="text-center my-1"><span class="badge bg-dark bg-opacity-75 text-white-50 rounded-pill px-3 py-1 font-monospace" style="font-size: 0.7rem;">Today</span></div>
+
+      <div class="msg-bubble msg-incoming">
+        Hey! 👋 Finally you're online 😄
+        <span class="msg-time">9:12 PM</span>
+      </div>
+
+      <div class="msg-bubble msg-outgoing">
+        Yeah bro 😅 You free now?
+        <span class="msg-time">9:13 PM <i class="bi bi-check2-all text-info"></i></span>
+      </div>
+
+      <div class="msg-bubble msg-incoming">
+        Yesss 😍 Just finished my work
+        <span class="msg-time">9:14 PM</span>
+      </div>
+
+      <div class="msg-bubble msg-outgoing">
+        Good 😊 What are you doing now?
+        <span class="msg-time">9:16 PM <i class="bi bi-check2-all text-info"></i></span>
+      </div>
+
+      <div class="msg-bubble msg-incoming">
+        Nothing much... just chilling want to call?
+        <span class="msg-time">9:17 PM</span>
+      </div>
+
+      <div class="msg-bubble msg-outgoing">
+        Sure 😄 Video call karte hai?
+        <span class="msg-time">9:18 PM <i class="bi bi-check2-all text-info"></i></span>
+      </div>
+
+      <div class="msg-bubble msg-incoming">
+        Haan karte hai ❤️
+        <span class="msg-time">9:18 PM</span>
+      </div>
+
+      <!-- Embedded Call History Summary Card (Screen 2) -->
+      <div class="msg-bubble msg-incoming p-3 rounded-4" style="background: rgba(16, 27, 51, 0.95); border: 1px solid rgba(0, 122, 255, 0.2);">
+        <div class="d-flex align-items-center justify-content-between gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style="width: 42px; height: 42px; font-size: 1.2rem;">
+              <i class="bi bi-camera-video-fill"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-white">Video Call</div>
+              <small class="text-white-50">Duration: 12:34</small>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 font-monospace" style="font-size: 0.75rem;">View</button>
+        </div>
+        <div class="text-end text-white-50" style="font-size: 0.65rem; margin-top: 4px;">9:20 PM</div>
+      </div>
+
+      <div class="msg-bubble msg-outgoing">
+        It was nice talking to you 😊
+        <span class="msg-time">9:21 PM <i class="bi bi-check2-all text-info"></i></span>
+      </div>
+
+      <div class="msg-bubble msg-incoming">
+        Me too... take care 💙
+        <span class="msg-time">9:22 PM</span>
       </div>
     </div>
 
-    <!-- RECENTS TAB -->
-    <div class="tab-pane fade" id="tabRecents" role="tabpanel">
-      <div id="recentList" class="overflow-hidden">
-        <div class="text-center text-muted py-5"><small>Loading call history...</small></div>
+    <!-- Rich Input Dock -->
+    <div class="chat-input-dock">
+      <div class="chat-input-pill">
+        <button id="btnChatEmoji" class="btn btn-sm text-white-50 p-0"><i class="bi bi-emoji-smile fs-5"></i></button>
+        <input type="text" id="chatTextInput" placeholder="Type a message...">
+        <button id="btnChatAttach" class="btn btn-sm text-white-50 p-0"><i class="bi bi-paperclip fs-5"></i></button>
+        <button id="btnChatCamera" class="btn btn-sm text-white-50 p-0"><i class="bi bi-camera fs-5"></i></button>
       </div>
-    </div>
-
-    <!-- CONTACTS TAB -->
-    <div class="tab-pane fade" id="tabContacts" role="tabpanel">
-      <div class="d-flex justify-content-between align-items-center mb-3 px-1">
-        <h6 class="mb-0 fw-bold fs-6">My Contacts</h6>
-        <button class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#addContactModal">
-          <i class="bi bi-plus-lg me-1"></i> Add Contact
-        </button>
-      </div>
-      <div id="contactList" class="overflow-hidden">
-        <div class="text-center text-muted py-5"><small>Loading contacts...</small></div>
-      </div>
-    </div>
-  </main>
-</div>
-
-<!-- ======================================================================= -->
-<!-- IMO-STYLE FULLSCREEN INCOMING CALL OVERLAY                             -->
-<!-- ======================================================================= -->
-<div id="imoIncomingCallScreen" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-between p-5 text-white text-center">
-  <div class="mt-4">
-    <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50 px-3 py-2 rounded-pill fw-medium" id="imoCallType">
-      Incoming Call
-    </span>
-  </div>
-
-  <div class="my-auto">
-    <!-- Animated Concentric Rippling Avatar -->
-    <div class="ripple-avatar-container mb-4">
-      <div class="ripple-ring"></div>
-      <div class="ripple-ring"></div>
-      <div class="ripple-ring"></div>
-      <div class="imo-avatar overflow-hidden position-relative shadow-lg" id="imoCallerAvatarContainer">
-        <img id="imoCallerAvatarImg" class="w-100 h-100 object-fit-cover d-none" alt="Caller Photo" />
-        <span id="imoCallerInitial">?</span>
-      </div>
-    </div>
-
-    <h2 id="imoCallerName" class="fw-bold mb-1">Incoming Caller</h2>
-    <h5 id="imoCallerNumber" class="text-white-50 font-monospace mb-2">---</h5>
-    <div class="text-success small fw-semibold">
-      <span class="spinner-grow spinner-grow-sm text-success me-1" role="status"></span> Ringing...
-    </div>
-  </div>
-
-  <!-- Swipe / Tap Call Controls -->
-  <div class="d-flex justify-content-around align-items-center mb-4 px-4">
-    <div class="text-center">
-      <button id="btnImoReject" class="glow-btn-reject shadow-lg mb-2" title="Decline">
-        <i class="bi bi-telephone-x-fill"></i>
-      </button>
-      <div class="small text-white-50">Decline</div>
-    </div>
-
-    <div class="text-center">
-      <button id="btnImoAccept" class="glow-btn-accept shadow-lg mb-2" title="Accept">
-        <i class="bi bi-telephone-fill"></i>
-      </button>
-      <div class="small text-white-50">Answer</div>
-    </div>
-  </div>
-</div>
-
-<!-- ======================================================================= -->
-<!-- ACTIVE CALL SCREEN (OUTGOING & IN-CALL WITH FLOATING PiP PREVIEW)        -->
-<!-- ======================================================================= -->
-<div id="callScreen" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex flex-column justify-content-between">
-  <!-- Top bar info -->
-  <div class="position-absolute top-0 start-0 w-100 p-4 d-flex justify-content-between align-items-center" style="z-index: 2240;">
-    <div>
-      <h5 id="callPeer" class="text-white mb-1 fw-bold">Connecting...</h5>
-      <span id="callStatusBadge" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">
-        Calling...
-      </span>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-      <button id="btnPip" class="btn btn-sm btn-dark bg-opacity-75 text-white rounded-pill px-3" title="Picture in Picture">
-        <i class="bi bi-pip"></i>
-      </button>
-      <div id="callTimer" class="badge bg-dark bg-opacity-75 text-white px-3 py-2 fs-6 rounded-pill border border-secondary border-opacity-50">
-        00:00
-      </div>
-    </div>
-  </div>
-
-  <!-- Outgoing Audio Call Sound Wave animation -->
-  <div id="outgoingWaveAnimation" class="position-absolute top-50 start-50 translate-middle text-center text-white d-none" style="z-index: 2210;">
-    <div class="sound-wave mb-3">
-      <span></span><span></span><span></span><span></span><span></span>
-    </div>
-    <div class="small text-white-50">Secure Peer-to-Peer Encrypted Voice Link</div>
-  </div>
-
-  <!-- Remote Profile Avatar (Displayed when Peer's camera is closed or audio call) -->
-  <div id="remoteAvatarView" class="position-absolute top-50 start-50 translate-middle text-center text-white d-none" style="z-index: 2210; width: 90%; max-width: 360px;">
-    <div class="ripple-avatar-container mb-4 mx-auto">
-      <div class="ripple-ring"></div>
-      <div class="ripple-ring"></div>
-      <div class="ripple-ring"></div>
-      <div class="imo-avatar overflow-hidden position-relative shadow-lg mx-auto" id="remoteAvatarContainer">
-        <img id="remoteAvatarImg" class="w-100 h-100 object-fit-cover d-none" alt="Peer Photo" />
-        <span id="remoteAvatarInitial" class="fs-1 fw-bold">?</span>
-      </div>
-    </div>
-    <h3 id="remotePeerNameDisplay" class="fw-bold mb-1">Connecting...</h3>
-    <p id="remotePeerNumberDisplay" class="text-white-50 font-monospace mb-2">---</p>
-    <div id="remoteCamStatusBadge" class="badge bg-dark bg-opacity-75 text-info px-3 py-1.5 rounded-pill border border-info border-opacity-25 small">
-      <i class="bi bi-camera-video-off-fill me-1"></i> Camera is Off
-    </div>
-  </div>
-
-  <!-- Remote Fullscreen Video -->
-  <video id="remoteVideo" autoplay playsinline></video>
-
-  <!-- Local Floating PiP Container (Video or Mini Profile Photo if Camera Off) -->
-  <div id="localVideoContainer" class="position-absolute top-0 end-0 m-3 shadow-lg rounded-4 overflow-hidden" style="z-index: 2230;">
-    <video id="localVideo" autoplay playsinline muted></video>
-    <div id="localAvatarView" class="d-none d-flex flex-column align-items-center justify-content-center text-white">
-      <div class="mini-pip-avatar rounded-circle overflow-hidden mb-1 shadow-sm">
-        <img id="localAvatarImg" class="w-100 h-100 object-fit-cover d-none" />
-        <span id="localAvatarInitial" class="fw-bold">Me</span>
-      </div>
-      <small class="text-white-50 fw-semibold" style="font-size: 0.65rem;">Camera Off</small>
-    </div>
-  </div>
-
-  <!-- Bottom Call Controls Dock -->
-  <div class="position-absolute bottom-0 start-0 w-100 pb-5 d-flex justify-content-center" style="z-index: 2240;">
-    <div class="call-control-dock d-flex gap-3">
-      <button id="btnMute" class="btn btn-secondary call-control-btn shadow" title="Mute Mic">
+      <button class="btn-mic-record" id="btnChatMic" title="Hold to record voice note">
         <i class="bi bi-mic-fill"></i>
       </button>
-      <button id="btnCam" class="btn btn-secondary call-control-btn shadow" title="Camera Toggle">
-        <i class="bi bi-camera-video-fill"></i>
-      </button>
-      <button id="btnFlip" class="btn btn-secondary call-control-btn shadow" title="Flip Camera">
-        <i class="bi bi-arrow-repeat"></i>
-      </button>
-      <button id="btnScreenShare" class="btn btn-secondary call-control-btn shadow" title="Share Screen">
-        <i class="bi bi-display"></i>
-      </button>
-      <button id="btnEnd" class="btn btn-danger call-control-btn shadow" title="End Call">
-        <i class="bi bi-telephone-x-fill"></i>
-      </button>
     </div>
   </div>
-</div>
 
-<!-- CHAT OFFCANVAS DRAWER -->
-<div class="offcanvas offcanvas-end" tabindex="-1" id="chatOffcanvas" style="width: 100%; max-width: 480px;">
-  <div class="offcanvas-header border-bottom py-3">
-    <div class="d-flex align-items-center gap-2">
-      <button type="button" class="btn btn-sm btn-light rounded-circle" data-bs-dismiss="offcanvas">
-        <i class="bi bi-arrow-left"></i>
-      </button>
-      <div>
-        <h6 class="offcanvas-title fw-bold mb-0" id="chatHeaderTitle">Chat</h6>
-        <small class="text-success" style="font-size:0.7rem;"><i class="bi bi-shield-lock-fill"></i> E2EE Active</small>
-      </div>
-    </div>
-  </div>
-  <div class="offcanvas-body d-flex flex-column p-0">
-    <div class="chat-messages flex-grow-1" id="chatMessages">
-      <!-- Chat bubbles injected here -->
-    </div>
-    <div id="chatTyping" class="px-3 py-1 text-muted small d-none">
-      <em>User is typing...</em>
-    </div>
-
-    <!-- TELEGRAM EMOJI DRAWER -->
-    <div id="telegramEmojiDrawer" class="border-top bg-white p-2 d-none shadow-sm" style="max-height: 180px; overflow-y: auto;">
-      <div id="telegramEmojiGrid" class="d-flex flex-wrap gap-1 justify-content-center">
-        <!-- Dynamically populated with Telegram emojis -->
-      </div>
-    </div>
-
-    <!-- CHAT BOTTOM CONTROLS & RECORDING BAR -->
-    <div class="p-3 border-top bg-white">
-      <!-- Voice Recording Bar (shown while recording) -->
-      <div id="chatRecordingBar" class="d-none d-flex align-items-center justify-content-between p-2 bg-light rounded-pill border">
-        <div class="d-flex align-items-center gap-2 ps-2">
-          <span class="pulse-red-record"></span>
-          <span class="fw-bold font-monospace text-danger" id="recordingTimer">00:00</span>
-          <small class="text-muted ms-1">Recording voice note...</small>
+  <!-- ======================================================================= -->
+  <!-- SCREEN 4: NEON BLUE ACTIVE CALL SCREEN                                  -->
+  <!-- ======================================================================= -->
+  <div id="viewActiveCall" class="call-fullscreen-view d-none">
+    
+    <!-- Top Bar -->
+    <div class="call-top-bar">
+      <button id="btnCallMinimize" class="icon-btn-ghost"><i class="bi bi-chevron-down"></i></button>
+      <div class="brand-wrapper">
+        <div class="brand-icon-3d" style="width: 32px; height: 32px; font-size: 1rem;">
+          <i class="bi bi-chat-fill"></i>
         </div>
-        <div class="d-flex gap-2">
-          <button id="btnCancelRecord" class="btn btn-sm btn-white text-danger rounded-circle p-2 shadow-sm border" title="Discard">
-            <i class="bi bi-trash-fill"></i>
-          </button>
-          <button id="btnSendRecord" class="btn btn-sm btn-success rounded-circle p-2 shadow-sm text-white" title="Send Voice Note">
-            <i class="bi bi-check-lg fw-bold"></i>
-          </button>
+        <h4 class="brand-title fs-5 mb-0"><span class="v-accent">V</span> Call</h4>
+      </div>
+      <button id="btnCallSpeakerTop" class="icon-btn-ghost"><i class="bi bi-volume-up-fill"></i></button>
+    </div>
+
+    <!-- Active Call Hero Center -->
+    <div class="call-center-hero">
+      <div class="call-type-badge" id="activeCallTypeBadge">
+        <i class="bi bi-telephone-fill"></i> Voice Call
+      </div>
+      <h2 class="call-peer-name" id="activeCallPeerName">Riya 💙</h2>
+      <div class="call-timer-text" id="activeCallTimer">00:12</div>
+
+      <!-- Hero Glowing Neon Concentric Rings Stage -->
+      <div class="neon-avatar-stage">
+        <div class="neon-ring-outer"></div>
+        <div class="neon-ring-middle"></div>
+        <div class="neon-avatar-core" id="neonAvatarContainer">
+          <img id="neonAvatarImg" class="w-100 h-100 object-fit-cover d-none" />
+          <span id="neonAvatarInitial" class="fs-1 fw-bold text-white d-flex align-items-center justify-content-center h-100">R</span>
+          <span class="online-badge" style="bottom: 12px; right: 12px; width: 14px; height: 14px;"></span>
         </div>
       </div>
 
-      <!-- Standard Input Row -->
-      <div id="chatInputRow" class="input-group">
-        <button id="btnToggleEmoji" class="btn btn-light border-end-0 rounded-start-pill ps-3 pe-2 text-warning fs-5" type="button" title="Telegram Emojis">
-          <i class="bi bi-emoji-smile-fill"></i>
+      <!-- Live Voice Soundwave animation -->
+      <div class="call-soundwave-bar" id="activeCallSoundWave">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="small text-white-50" id="activeCallConnSubtitle">Voice is connected</div>
+    </div>
+
+    <!-- Remote Fullscreen Video (shown when camera on) -->
+    <video id="remoteVideo" class="d-none position-absolute inset-0 w-100 h-100 object-fit-cover" autoplay playsinline style="z-index: 10;"></video>
+    <video id="localVideo" class="d-none position-absolute top-0 end-0 m-3 shadow-lg rounded-4" autoplay playsinline muted style="z-index: 20; width: 120px; height: 160px; object-fit: cover; border: 2px solid #00d2ff;"></video>
+
+    <!-- 5-Button Circular Control Dock (Screen 4 Reference) -->
+    <div class="call-actions-dock" style="z-index: 30;">
+      <div class="call-action-col">
+        <button id="btnCallMute" class="call-circle-btn" title="Mute Audio">
+          <i class="bi bi-mic-mute-fill"></i>
         </button>
-        <input type="text" id="chatInput" class="form-control border-start-0 border-end-0 py-2" placeholder="Type an encrypted message...">
-        <button id="btnVoiceRecord" class="btn btn-light border-start-0 border-end-0 px-3 text-primary fs-5" type="button" title="Record Voice Note">
-          <i class="bi bi-mic-fill"></i>
+        <span class="call-btn-label">Mute</span>
+      </div>
+
+      <div class="call-action-col">
+        <button id="btnCallKeypad" class="call-circle-btn" title="Keypad">
+          <i class="bi bi-grid-3x3-gap-fill"></i>
         </button>
-        <button id="btnSendChat" class="btn btn-primary rounded-end-pill px-4 shadow-sm">
-          <i class="bi bi-send-fill"></i>
+        <span class="call-btn-label">Keypad</span>
+      </div>
+
+      <div class="call-action-col">
+        <button id="btnCallHangup" class="call-circle-btn btn-hangup" title="End Call">
+          <i class="bi bi-telephone-x-fill"></i>
         </button>
       </div>
-    </div>
-  </div>
-</div>
 
-<!-- SHARE LINE & QR CODE MODAL -->
-<div class="modal fade" id="shareModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 border-0 shadow-lg p-3 text-center">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold">Share Your Calling Line</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body py-3">
-        <div class="p-3 bg-white border rounded-4 d-inline-block shadow-sm mb-3">
-          <img id="shareQrImage" src="" alt="Call QR Code" style="width: 180px; height: 180px;" class="rounded-3">
-        </div>
-        <p class="text-muted small mb-3">Scan this QR code with any phone camera to call this number instantly without downloading an app!</p>
-        <div class="input-group">
-          <input type="text" id="shareLinkInput" class="form-control rounded-start-pill" readonly>
-          <button id="btnCopyShareLink" class="btn btn-primary rounded-end-pill px-3 fw-semibold">
-            <i class="bi bi-clipboard me-1"></i> Copy Link
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- CUSTOM NUMBER & NAME MODAL -->
-<div class="modal fade" id="customNumberModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 border-0 shadow-lg p-2">
-      <div class="modal-header border-0 pb-0">
-        <div>
-          <h5 class="modal-title fw-bold">Pick Your Custom VIP Number</h5>
-          <small class="text-muted">Choose your own 10-digit number or nickname</small>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body py-3">
-        <div class="mb-3">
-          <label class="form-label small fw-semibold text-muted">Your Display Name</label>
-          <input type="text" id="customNameInput" class="form-control rounded-3" placeholder="e.g. Alex" maxlength="50">
-        </div>
-        <div class="mb-3">
-          <label class="form-label small fw-semibold text-muted">Custom 10-Digit Virtual Number</label>
-          <input type="text" id="customNumberInput" class="form-control form-control-lg rounded-3 font-monospace" placeholder="e.g. 8888888888" maxlength="10" inputmode="numeric">
-          <small class="text-muted">Must be 10 digits and cannot start with 0. All your contacts and messages will automatically transfer!</small>
-        </div>
-      </div>
-      <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" id="saveCustomNumberBtn" class="btn btn-primary rounded-pill px-4 fw-bold">
-          <i class="bi bi-check2-circle me-1"></i> Activate Number
+      <div class="call-action-col">
+        <button id="btnCallSpeaker" class="call-circle-btn" title="Speaker">
+          <i class="bi bi-volume-up-fill"></i>
         </button>
+        <span class="call-btn-label">Speaker</span>
+      </div>
+
+      <div class="call-action-col">
+        <button id="btnCallAddPeer" class="call-circle-btn" title="Add Call (Group / Conference)">
+          <i class="bi bi-person-plus-fill"></i>
+        </button>
+        <span class="call-btn-label">Add Call</span>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ADD CONTACT MODAL -->
-<div class="modal fade" id="addContactModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold">Add Contact</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  <!-- ======================================================================= -->
+  <!-- SCREEN 5: WELCOME & VIRTUAL NUMBER LOGIN SCREEN                         -->
+  <!-- ======================================================================= -->
+  <div id="viewWelcomeLogin" class="welcome-screen-view d-none">
+    
+    <!-- Hero Branding -->
+    <div class="welcome-hero">
+      <div class="welcome-logo-3d">
+        <i class="bi bi-chat-fill"></i>
       </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <label class="form-label small text-muted">Virtual Number (10 digits)</label>
-          <input type="text" id="contactNumberInput" class="form-control rounded-3" placeholder="e.g. 7384920155" maxlength="10">
+      <h2 class="welcome-title"><span class="v-accent">V</span> Call</h2>
+      <p class="welcome-desc">Connect with the people who matter</p>
+    </div>
+
+    <!-- Phone Number / Instant Virtual Line Input Card -->
+    <div class="welcome-form-card">
+      <div class="phone-input-group">
+        <div class="phone-input-label">
+          <i class="bi bi-phone"></i> Phone number / Virtual Line
         </div>
-        <div class="mb-3">
-          <label class="form-label small text-muted">Nickname</label>
-          <input type="text" id="contactNameInput" class="form-control rounded-3" placeholder="e.g. John Doe" maxlength="50">
+        <div class="phone-input-row">
+          <div class="country-code-pill" id="btnCountryPicker">
+            +91 <i class="bi bi-chevron-down small"></i>
+          </div>
+          <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.15);"></div>
+          <input type="text" id="welcomePhoneInput" class="phone-raw-input font-monospace" placeholder="Enter 10-digit number" maxlength="10" inputmode="numeric">
         </div>
       </div>
-      <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" id="saveContactBtn" class="btn btn-primary rounded-pill px-4">Save</button>
+
+      <button id="btnWelcomeContinue" class="btn-continue-blue">
+        <span>Continue</span> <i class="bi bi-arrow-right"></i>
+      </button>
+
+      <div class="divider-or">
+        <span>OR</span>
+      </div>
+
+      <button id="btnWelcomeInstantLine" class="btn-google-login">
+        <i class="bi bi-dice-5-fill text-warning fs-5"></i>
+        <span>Get Instant Free Virtual Line</span>
+      </button>
+
+      <button id="btnWelcomeGoogle" class="btn-google-login">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.836.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z"/></svg>
+        <span>Continue with Google</span>
+      </button>
+
+      <div class="welcome-footer-badges">
+        <div class="badge-item"><i class="bi bi-lightning-charge-fill text-warning"></i> Fast</div>
+        <span>&bull;</span>
+        <div class="badge-item"><i class="bi bi-shield-check text-info"></i> Simple</div>
+        <span>&bull;</span>
+        <div class="badge-item"><i class="bi bi-lock-fill text-success"></i> Secure</div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- PROFILE SETTINGS MODAL -->
-<div class="modal fade" id="settingsModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold">Line & Profile Settings</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="p-3 bg-light rounded-3 mb-3 text-center">
-          <small class="text-muted d-block">Active Line Number</small>
-          <h4 id="profileNumberBadge" class="fw-bold text-primary mb-0 font-monospace">-</h4>
+  <!-- ======================================================================= -->
+  <!-- MODAL: DIALPAD OVERLAY                                                  -->
+  <!-- ======================================================================= -->
+  <div class="modal fade" id="dialpadModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg" style="background: rgba(8, 17, 34, 0.95); backdrop-filter: blur(24px); border-radius: 28px; border: 1px solid rgba(255,255,255,0.1);">
+        <div class="modal-header border-0 pb-0">
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-50 rounded-pill px-3 py-1">Direct Dial</span>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
+        <div class="modal-body text-center pt-2">
+          <!-- Dial Display Input -->
+          <input type="text" id="dialNumberDisplay" class="form-control form-control-lg text-center font-monospace fw-bold mb-3 text-white" placeholder="Enter 10 Digits" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; font-size: 1.6rem; letter-spacing: 2px;" maxlength="10">
+          
+          <div id="dialPeerStatusBadge" class="small mb-3 text-white-50">Enter number to check status</div>
 
-        <!-- Profile Photo / Avatar Section -->
-        <div class="mb-3 text-center">
-          <label class="form-label small fw-semibold text-muted d-block">Profile Photo / Avatar</label>
-          <div class="d-flex justify-content-center align-items-center mb-2">
-            <div id="settingsAvatarPreview" class="brand-avatar position-relative overflow-hidden shadow" style="width: 72px; height: 72px; border-radius: 50%; font-size: 2rem;">
-              <img id="settingsAvatarPreviewImg" class="w-100 h-100 object-fit-cover d-none" />
-              <span id="settingsAvatarPreviewText">V</span>
+          <!-- 9-Dot Keypad Grid -->
+          <div class="d-grid gap-2" style="grid-template-columns: repeat(3, 1fr); max-width: 280px; margin: 0 auto;">
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="1">1</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="2">2</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="3">3</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="4">4</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="5">5</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="6">6</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="7">7</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="8">8</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="9">9</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="*">*</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="0">0</button>
+            <button class="btn btn-outline-light rounded-circle dial-key" data-key="#"><i class="bi bi-backspace"></i></button>
+          </div>
+
+          <!-- Dual Call Buttons: Audio & Video -->
+          <div class="d-flex justify-content-center gap-3 mt-4">
+            <button id="btnModalStartVoice" class="btn btn-success rounded-pill px-4 py-2.5 fw-bold shadow">
+              <i class="bi bi-telephone-fill me-1"></i> Audio Call
+            </button>
+            <button id="btnModalStartVideo" class="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow">
+              <i class="bi bi-camera-video-fill me-1"></i> Video Call
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================================= -->
+  <!-- MODAL: SETTINGS & PROFILE CUSTOMIZATION                                -->
+  <!-- ======================================================================= -->
+  <div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg text-white" style="background: rgba(8, 17, 34, 0.96); backdrop-filter: blur(24px); border-radius: 28px; border: 1px solid rgba(255,255,255,0.1);">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">Line & Profile Settings</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="p-3 bg-dark bg-opacity-50 rounded-4 mb-3 text-center border border-secondary border-opacity-25">
+            <small class="text-white-50 d-block">Active Line Number</small>
+            <h3 id="profileNumberBadge" class="fw-bold text-info mb-0 font-monospace">-</h3>
+          </div>
+
+          <!-- Profile Photo / Avatar Picker -->
+          <div class="mb-3 text-center">
+            <div class="d-flex justify-content-center align-items-center mb-2">
+              <div id="settingsAvatarPreview" class="header-avatar position-relative shadow" style="width: 76px; height: 76px; font-size: 2rem;">
+                <img id="settingsAvatarPreviewImg" class="w-100 h-100 object-fit-cover d-none" />
+                <span id="settingsAvatarPreviewText">V</span>
+              </div>
+            </div>
+
+            <input type="file" id="avatarFileInput" accept="image/*" class="d-none">
+            <div class="d-flex justify-content-center gap-2 mb-3">
+              <button type="button" id="btnUploadAvatar" class="btn btn-sm btn-outline-info rounded-pill px-3">
+                <i class="bi bi-camera-fill me-1"></i> Upload Photo
+              </button>
+              <button type="button" id="btnRemoveAvatar" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Reset</button>
+            </div>
+
+            <small class="text-white-50 d-block mb-1.5" style="font-size: 0.75rem;">Or pick an avatar preset:</small>
+            <div class="d-flex justify-content-center flex-wrap gap-2" id="avatarPresetContainer">
+              <button type="button" class="avatar-preset-btn" data-preset="😎">😎</button>
+              <button type="button" class="avatar-preset-btn" data-preset="🦊">🦊</button>
+              <button type="button" class="avatar-preset-btn" data-preset="🚀">🚀</button>
+              <button type="button" class="avatar-preset-btn" data-preset="⚡">⚡</button>
+              <button type="button" class="avatar-preset-btn" data-preset="👑">👑</button>
+              <button type="button" class="avatar-preset-btn" data-preset="🎧">🎧</button>
+              <button type="button" class="avatar-preset-btn" data-preset="🔥">🔥</button>
+              <button type="button" class="avatar-preset-btn" data-preset="💎">💎</button>
             </div>
           </div>
 
-          <!-- Upload Custom Photo from Device -->
-          <input type="file" id="avatarFileInput" accept="image/*" class="d-none">
-          <div class="d-flex justify-content-center gap-2 mb-3">
-            <button type="button" id="btnUploadAvatar" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-              <i class="bi bi-camera-fill me-1"></i> Upload Photo
-            </button>
-            <button type="button" id="btnRemoveAvatar" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-              Reset
-            </button>
+          <div class="mb-3">
+            <label class="form-label small text-white-50">Display Name</label>
+            <input type="text" id="settingsNameInput" class="form-control rounded-3 bg-dark text-white border-secondary" placeholder="Your name" maxlength="50">
           </div>
 
-          <!-- Quick 3D Presets -->
-          <small class="text-muted d-block mb-1.5" style="font-size: 0.75rem;">Or pick an avatar:</small>
-          <div class="d-flex justify-content-center flex-wrap gap-2" id="avatarPresetContainer">
-            <button type="button" class="avatar-preset-btn" data-preset="😎">😎</button>
-            <button type="button" class="avatar-preset-btn" data-preset="🦊">🦊</button>
-            <button type="button" class="avatar-preset-btn" data-preset="🚀">🚀</button>
-            <button type="button" class="avatar-preset-btn" data-preset="⚡">⚡</button>
-            <button type="button" class="avatar-preset-btn" data-preset="👑">👑</button>
-            <button type="button" class="avatar-preset-btn" data-preset="🎧">🎧</button>
-            <button type="button" class="avatar-preset-btn" data-preset="🔥">🔥</button>
-            <button type="button" class="avatar-preset-btn" data-preset="💎">💎</button>
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label small text-muted">Display Name</label>
-          <input type="text" id="settingsNameInput" class="form-control rounded-3" placeholder="Your name" maxlength="50">
-        </div>
-
-        <!-- Web Push Notification Status Card -->
-        <div class="card border-0 bg-light rounded-3 p-3 mb-2">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <div class="fw-semibold small text-dark"><i class="bi bi-bell-fill text-primary me-1"></i> Background Call Alerts</div>
-              <small class="text-muted" style="font-size: 0.72rem;">Ring & vibrate even when browser is closed</small>
+          <!-- Web Push Notifications -->
+          <div class="card border-0 bg-dark bg-opacity-50 rounded-4 p-3 mb-2 border border-secondary border-opacity-25">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-semibold small text-white"><i class="bi bi-bell-fill text-primary me-1"></i> Background Call Alerts</div>
+                <small class="text-white-50" style="font-size: 0.72rem;">Ring & vibrate when app is closed</small>
+              </div>
+              <span id="pushStatusBadge" class="badge bg-secondary rounded-pill px-2 py-1">Disabled</span>
             </div>
-            <span id="pushStatusBadge" class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1">Disabled</span>
+            <button type="button" id="btnTogglePush" class="btn btn-sm btn-outline-primary rounded-pill mt-2 w-100 fw-semibold">
+              <i class="bi bi-bell me-1"></i> Enable Ringing Notifications
+            </button>
           </div>
-          <button type="button" id="btnTogglePush" class="btn btn-sm btn-outline-primary rounded-pill mt-2 w-100 fw-semibold">
-            <i class="bi bi-bell me-1"></i> Enable Ringing Notifications
-          </button>
         </div>
-      </div>
-      <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Close</button>
-        <button type="button" id="saveSettingsBtn" class="btn btn-primary rounded-pill px-4">Save Changes</button>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Close</button>
+          <button type="button" id="saveSettingsBtn" class="btn btn-primary rounded-pill px-4 fw-bold">Save Changes</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- TOAST CONTAINER -->
+  <!-- ======================================================================= -->
+  <!-- MODAL: ADD CONTACT                                                      -->
+  <!-- ======================================================================= -->
+  <div class="modal fade" id="addContactModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow text-white" style="background: rgba(8, 17, 34, 0.96); border-radius: 28px; border: 1px solid rgba(255,255,255,0.1);">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">Add Contact</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small text-white-50">Virtual Number (10 digits)</label>
+            <input type="text" id="contactNumberInput" class="form-control rounded-3 bg-dark text-white border-secondary font-monospace" placeholder="e.g. 7384920155" maxlength="10">
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-white-50">Nickname</label>
+            <input type="text" id="contactNameInput" class="form-control rounded-3 bg-dark text-white border-secondary" placeholder="e.g. Riya" maxlength="50">
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" id="saveContactBtn" class="btn btn-primary rounded-pill px-4">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div> <!-- /app-container -->
+
+<!-- Toast Notification Container -->
 <div class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3" id="toastContainer" style="z-index: 3000;"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
