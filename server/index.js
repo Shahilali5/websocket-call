@@ -6,6 +6,8 @@ try {
   } catch {}
 }
 const express = require('express');
+const fs = require('fs');
+const https = require('https');
 const http = require('http');
 const path = require('path');
 const helmet = require('helmet');
@@ -41,8 +43,30 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Create HTTP and WebSocket Server
-const server = http.createServer(app);
+// Create HTTPS or HTTP Server based on certificates
+let server;
+let protocol = 'http';
+
+const certPath = process.env.SSL_CERT || path.join(__dirname, '../certs/cert.pem');
+const keyPath = process.env.SSL_KEY || path.join(__dirname, '../certs/key.pem');
+
+if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+  try {
+    const sslOptions = {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath)
+    };
+    server = https.createServer(sslOptions, app);
+    protocol = 'https';
+    console.log('[SSL] HTTPS enabled using SSL certificates in ./certs');
+  } catch (err) {
+    console.warn('[SSL] Could not load SSL certs, falling back to HTTP:', err.message);
+    server = http.createServer(app);
+  }
+} else {
+  server = http.createServer(app);
+}
+
 const wss = new WebSocketServer({
   server,
   path: '/ws',
@@ -51,10 +75,10 @@ const wss = new WebSocketServer({
 
 attachHub(wss);
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`===============================================`);
-  console.log(`🚀 VCall Server running on http://localhost:${PORT}`);
-  console.log(`📡 WebSocket endpoint at ws://localhost:${PORT}/ws`);
+  console.log(`🚀 VCall Server running on ${protocol}://0.0.0.0:${PORT}`);
+  console.log(`📡 WebSocket endpoint at ${protocol === 'https' ? 'wss' : 'ws'}://0.0.0.0:${PORT}/ws`);
   console.log(`===============================================`);
 });
 
