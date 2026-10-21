@@ -623,3 +623,94 @@ body {
 .presence-online { background-color: #10b981; }
 .presence-incall { background-color: #f59e0b; }
 .presence-offline { background-color: #94a3b8; }
+
+/* ==========================================================================
+   MOBILE & PWA OPTIMIZATIONS
+   ========================================================================== */
+@supports (height: 100dvh) {
+  body {
+    min-height: 100dvh;
+  }
+  .app-container {
+    min-height: 100dvh;
+  }
+}
+
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+/* Preset Avatar Selection Grid in Settings */
+.avatar-preset-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: #f1f5f9;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.avatar-preset-btn:hover,
+.avatar-preset-btn.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+/* ==========================================================================
+   IN-CALL AVATAR & CAMERA TOGGLE STYLES
+   ========================================================================== */
+#localVideoContainer {
+  width: 125px;
+  height: 180px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 18px !important;
+  transition: all 0.25s ease;
+}
+
+#localVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+  border: none;
+  box-shadow: none;
+}
+
+#localAvatarView {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
+  border-radius: 16px;
+}
+
+.mini-pip-avatar {
+  width: 52px;
+  height: 52px;
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+#remoteAvatarView {
+  animation: fadeInAvatar 0.3s ease-out;
+}
+
+@keyframes fadeInAvatar {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}

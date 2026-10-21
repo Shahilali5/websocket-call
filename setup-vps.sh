@@ -101,11 +101,25 @@ EOF
 echo -e "${GREEN}[✓] .env file configured for Port $APP_PORT.${NC}"
 
 # Step 6: Install Node dependencies
-echo -e "\n${BLUE}[6/7] Installing project dependencies...${NC}"
+echo -e "\n${BLUE}[6/8] Installing project dependencies & web-push...${NC}"
 npm install --omit=dev
+npm install web-push
 
-# Step 7: Configure Firewall (UFW)
-echo -e "\n${BLUE}[7/7] Configuring UFW Firewall for Port $APP_PORT & WebRTC...${NC}"
+# Step 7: Auto-generate SSL Certificate for Direct IP HTTPS
+echo -e "\n${BLUE}[7/8] Generating SSL certificate for native HTTPS on $SERVER_IP...${NC}"
+mkdir -p "$APP_DIR/certs"
+if [ ! -f "$APP_DIR/certs/cert.pem" ] || [ ! -f "$APP_DIR/certs/key.pem" ]; then
+  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+    -keyout "$APP_DIR/certs/key.pem" \
+    -out "$APP_DIR/certs/cert.pem" \
+    -subj "/CN=$SERVER_IP"
+  echo -e "${GREEN}[✓] Self-signed SSL certificate created in ./certs${NC}"
+else
+  echo -e "${GREEN}[✓] SSL certificates already exist in ./certs${NC}"
+fi
+
+# Step 8: Configure Firewall (UFW)
+echo -e "\n${BLUE}[8/8] Configuring UFW Firewall for Port $APP_PORT & WebRTC...${NC}"
 ufw allow 22/tcp comment 'SSH' || true
 ufw allow 80/tcp comment 'HTTP' || true
 ufw allow 443/tcp comment 'HTTPS' || true
@@ -117,50 +131,30 @@ ufw allow 49152:65535/udp comment 'WebRTC Media Relay UDP' || true
 echo "y" | ufw enable || true
 echo -e "${GREEN}[✓] Firewall configured.${NC}"
 
-# Step 8: Start / Restart Application with PM2
+# Free Port 2083 if occupied by LiteSpeed / cPanel
+fuser -k $APP_PORT/tcp 2>/dev/null || true
+kill -9 $(lsof -t -i:$APP_PORT) 2>/dev/null || true
+
+# Step 9: Start / Restart Application with PM2
 echo -e "\n${BLUE}[*] Launching VCall with PM2 on Port $APP_PORT...${NC}"
 pm2 delete vcall 2>/dev/null || true
 pm2 start server/index.js --name vcall --time
 pm2 save
 pm2 startup systemd -u root --hp /root 2>/dev/null || true
 
-# Summary & Nginx Configuration Snippet
+# Summary
 echo -e "\n${GREEN}${BOLD}====================================================================${NC}"
-echo -e "${GREEN}${BOLD}🎉 VCall Successfully Deployed on VPS!${NC}"
+echo -e "${GREEN}${BOLD}🎉 VCall Successfully Deployed with Native HTTPS & Web Push!${NC}"
 echo -e "${GREEN}${BOLD}====================================================================${NC}"
-echo -e "Web & WebSocket URL : ${CYAN}${BOLD}http://$SERVER_IP:$APP_PORT${NC}"
-echo -e "Port                : ${YELLOW}${BOLD}$APP_PORT${NC}"
-echo -e "PM2 Status          : run ${BOLD}'pm2 status'${NC}"
-echo -e "Live Logs           : run ${BOLD}'pm2 logs vcall'${NC}"
-echo -e "Restart App         : run ${BOLD}'pm2 restart vcall'${NC}"
+echo -e "Native HTTPS App URL : ${CYAN}${BOLD}https://$SERVER_IP:$APP_PORT${NC}"
+echo -e "WebSocket WSS URL    : ${CYAN}${BOLD}wss://$SERVER_IP:$APP_PORT/ws${NC}"
+echo -e "Port                 : ${YELLOW}${BOLD}$APP_PORT${NC}"
+echo -e "PM2 Status           : run ${BOLD}'pm2 status'${NC}"
+echo -e "Live Logs            : run ${BOLD}'pm2 logs vcall'${NC}"
+echo -e "Restart App          : run ${BOLD}'pm2 restart vcall'${NC}"
 echo "--------------------------------------------------------------------"
-echo -e "${YELLOW}${BOLD}📌 Important Note for HTTPS / Cloudflare Users:${NC}"
-echo -e "Port ${BOLD}2083${NC} is one of Cloudflare's officially supported HTTPS/WSS ports!"
-echo -e "If you are using Cloudflare, simply proxy your domain (A record -> $SERVER_IP)"
-echo -e "and you can access your site securely at:"
-echo -e "  ${CYAN}https://yourdomain.com:2083${NC}"
-echo "--------------------------------------------------------------------"
-echo -e "${CYAN}${BOLD}Nginx Reverse Proxy Config (Optional):${NC}"
-echo -e "If you want Nginx to handle SSL on standard 443 or port 2083:"
-cat << 'EOF'
-server {
-    listen 2083 ssl http2;
-    server_name yourdomain.com;
-
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:2083;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 86400s;
-    }
-}
-EOF
+echo -e "${YELLOW}${BOLD}📌 Important Browser Note:${NC}"
+echo -e "When opening https://$SERVER_IP:$APP_PORT for the first time,"
+echo -e "click ${BOLD}'Advanced'${NC} -> ${BOLD}'Proceed to $SERVER_IP (unsafe)'${NC}."
+echo -e "This allows WebRTC camera, mic, and Web Push notifications to run!"
 echo "===================================================================="

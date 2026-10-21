@@ -25,7 +25,7 @@ app.use(
   })
 );
 app.use(cors());
-app.use(express.json({ limit: '64kb' }));
+app.use(express.json({ limit: '500kb' }));
 
 // Static frontend assets
 app.use(express.static(path.join(__dirname, '../public')));
@@ -34,6 +34,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/api', require('./routes/identity'));
 app.use('/api', require('./routes/me'));
 app.use('/api', require('./routes/history'));
+app.use('/api', require('./routes/push'));
 
 // SPA Fallback for client routing
 app.get('*', (req, res, next) => {

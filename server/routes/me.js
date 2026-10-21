@@ -18,7 +18,7 @@ router.get('/me', auth, (req, res) => {
 router.put('/me', auth, async (req, res) => {
   const { name, avatar } = req.body || {};
   const cleanName = name ? String(name).trim().slice(0, 50) : req.user.name;
-  const cleanAvatar = avatar ? String(avatar).trim().slice(0, 255) : req.user.avatar;
+  const cleanAvatar = avatar !== undefined ? (avatar ? String(avatar).trim().slice(0, 300000) : null) : req.user.avatar;
 
   try {
     await db.query('UPDATE users SET name = ?, avatar = ? WHERE id = ?', [cleanName, cleanAvatar, req.user.id]);
@@ -64,7 +64,7 @@ router.get('/lookup/:number', auth, async (req, res) => {
   }
 
   try {
-    const [rows] = await db.query('SELECT number, name, is_banned FROM users WHERE number = ?', [target]);
+    const [rows] = await db.query('SELECT number, name, avatar, is_banned FROM users WHERE number = ?', [target]);
     if (!rows.length || rows[0].is_banned) {
       return res.json({ exists: false });
     }
@@ -79,6 +79,7 @@ router.get('/lookup/:number', auth, async (req, res) => {
     res.json({
       exists: true,
       name: rows[0].name,
+      avatar: rows[0].avatar,
       status
     });
   } catch (err) {

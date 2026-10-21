@@ -76,6 +76,18 @@ if (dbClient === 'mysql') {
         PRIMARY KEY (owner_number, blocked_number)
       );
     `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        user_number CHAR(10) NOT NULL,
+        endpoint VARCHAR(500) NOT NULL,
+        p256dh VARCHAR(255) NOT NULL,
+        auth VARCHAR(255) NOT NULL,
+        device VARCHAR(100) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_number, endpoint(255)),
+        INDEX (user_number)
+      );
+    `);
     console.log('[DB] MySQL schema initialized successfully.');
   }
 
@@ -157,6 +169,17 @@ if (dbClient === 'mysql') {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (owner_number, blocked_number)
       );
+
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        user_number TEXT NOT NULL,
+        endpoint TEXT NOT NULL,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        device TEXT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (user_number, endpoint)
+      );
+      CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions (user_number);
     `);
     console.log('[DB] SQLite initialized at:', dbFile);
 
@@ -265,6 +288,26 @@ if (dbClient === 'mysql') {
       }
       if (/SELECT .* FROM contacts/i.test(q)) {
         return [store.contacts, []];
+      }
+      if (/INSERT INTO push_subscriptions/i.test(q)) {
+        const [user_number, endpoint, p256dh, auth, device] = params;
+        store.push_subscriptions = store.push_subscriptions || [];
+        store.push_subscriptions = store.push_subscriptions.filter(s => s.endpoint !== endpoint);
+        store.push_subscriptions.push({ user_number, endpoint, p256dh, auth, device, created_at: new Date().toISOString() });
+        saveStore();
+        return [{ affectedRows: 1 }, []];
+      }
+      if (/SELECT .* FROM push_subscriptions WHERE user_number/i.test(q)) {
+        const num = params[0];
+        store.push_subscriptions = store.push_subscriptions || [];
+        const res = store.push_subscriptions.filter(s => s.user_number === num);
+        return [res, []];
+      }
+      if (/DELETE FROM push_subscriptions WHERE endpoint/i.test(q)) {
+        const ep = params[0];
+        store.push_subscriptions = (store.push_subscriptions || []).filter(s => s.endpoint !== ep);
+        saveStore();
+        return [{ affectedRows: 1 }, []];
       }
       return [[], []];
     };

@@ -1,11 +1,13 @@
 import { send, on } from './ws.js';
 import { playRingtone, stopRingtone, playDialTone, stopDialTone, playCallEndSound, showToast, triggerIncomingCallAlert } from './ui.js';
+import { apiRequest } from './api.js';
 
 let pc = null;
 let localStream = null;
 let currentCallId = null;
 let currentPeer = null;
 let currentPeerName = 'User';
+let currentPeerAvatar = null;
 let isCaller = false;
 let isVideoCall = false;
 let currentFacingMode = 'user';
@@ -26,6 +28,88 @@ on('auth.ok', (m) => {
     iceServers = m.iceServers;
   }
 });
+
+/**
+ * Update local avatar view inside floating PiP
+ */
+function updateLocalAvatarPreview() {
+  const localAvatarImg = $('localAvatarImg');
+  const localAvatarInit = $('localAvatarInitial');
+  const myAvatar = localStorage.getItem('vc_avatar');
+  const myName = localStorage.getItem('vc_name') || 'Me';
+
+  if (myAvatar && (myAvatar.startsWith('data:image') || myAvatar.startsWith('http'))) {
+    if (localAvatarImg) {
+      localAvatarImg.src = myAvatar;
+      localAvatarImg.classList.remove('d-none');
+    }
+    if (localAvatarInit) localAvatarInit.classList.add('d-none');
+  } else {
+    if (localAvatarInit) {
+      localAvatarInit.textContent = myAvatar || myName[0]?.toUpperCase() || 'M';
+      localAvatarInit.classList.remove('d-none');
+    }
+    if (localAvatarImg) localAvatarImg.classList.add('d-none');
+  }
+}
+
+/**
+ * Toggles visibility between local video and local avatar inside PiP
+ */
+function setLocalVideoVisible(visible) {
+  const localVid = $('localVideo');
+  const localAv = $('localAvatarView');
+  if (visible) {
+    if (localVid) localVid.classList.remove('d-none');
+    if (localAv) localAv.classList.add('d-none');
+  } else {
+    if (localVid) localVid.classList.add('d-none');
+    if (localAv) localAv.classList.remove('d-none');
+    updateLocalAvatarPreview();
+  }
+}
+
+/**
+ * Toggles visibility between remote video and remote avatar screen
+ */
+function setRemoteVideoVisible(visible) {
+  const remoteVid = $('remoteVideo');
+  const remoteAv = $('remoteAvatarView');
+  const waveAnim = $('outgoingWaveAnimation');
+
+  if (visible) {
+    if (remoteVid) remoteVid.classList.remove('d-none');
+    if (remoteAv) remoteAv.classList.add('d-none');
+    if (waveAnim) waveAnim.classList.add('d-none');
+  } else {
+    if (remoteVid) remoteVid.classList.add('d-none');
+    if (remoteAv) {
+      remoteAv.classList.remove('d-none');
+      // Update peer details
+      const nameDisp = $('remotePeerNameDisplay');
+      const numDisp = $('remotePeerNumberDisplay');
+      const avImg = $('remoteAvatarImg');
+      const avInit = $('remoteAvatarInitial');
+
+      if (nameDisp) nameDisp.textContent = currentPeerName;
+      if (numDisp) numDisp.textContent = currentPeer || '---';
+
+      if (currentPeerAvatar && (currentPeerAvatar.startsWith('data:image') || currentPeerAvatar.startsWith('http'))) {
+        if (avImg) {
+          avImg.src = currentPeerAvatar;
+          avImg.classList.remove('d-none');
+        }
+        if (avInit) avInit.classList.add('d-none');
+      } else {
+        if (avInit) {
+          avInit.textContent = currentPeerAvatar || currentPeerName[0]?.toUpperCase() || 'V';
+          avInit.classList.remove('d-none');
+        }
+        if (avImg) avImg.classList.add('d-none');
+      }
+    }
+  }
+}
 
 /**
  * Media Capture with Hardware Acoustic Cancellation & Auto-Gain
@@ -64,9 +148,9 @@ async function getMedia(wantVideo) {
   const localVidEl = $('localVideo');
   if (localVidEl) {
     localVidEl.srcObject = localStream;
-    localVidEl.style.display = wantVideo ? 'block' : 'none';
   }
 
+  setLocalVideoVisible(wantVideo);
   return localStream;
 }
 
@@ -96,6 +180,10 @@ function createPC() {
     const remoteVid = $('remoteVideo');
     if (remoteVid && e.streams && e.streams[0]) {
       remoteVid.srcObject = e.streams[0];
+    }
+    if (e.track && e.track.kind === 'video') {
+      e.track.onmute = () => setRemoteVideoVisible(false);
+      e.track.onunmute = () => setRemoteVideoVisible(true);
     }
   };
 
@@ -142,9 +230,12 @@ async function tuneVideoSender(sender) {
     if (!params.encodings || params.encodings.length === 0) {
       params.encodings = [{}];
     }
-    params.encodings[0].maxBitrate = 1500000;
+    params.encodings[0].maxBitrate = 1200000; // 1.2 Mbps for crisp 720p/1080p
+    params.encodings[0].networkPriority = 'high';
     await sender.setParameters(params);
-  } catch {}
+  } catch (err) {
+    // Non-critical parameter tuning
+  }
 }
 
 async function flushPendingCandidates() {
@@ -170,9 +261,17 @@ export async function startCall(to, withVideo) {
   currentCallId = crypto.randomUUID();
   currentPeer = to;
   currentPeerName = to;
+  currentPeerAvatar = null;
   isCaller = true;
   isVideoCall = withVideo;
   pendingCandidates = [];
+
+  // Async lookup peer name/avatar for immediate rich display
+  apiRequest(`/lookup/${to}`).then((info) => {
+    if (info && info.name) currentPeerName = info.name;
+    if (info && info.avatar) currentPeerAvatar = info.avatar;
+    if (!withVideo) setRemoteVideoVisible(false);
+  }).catch(() => {});
 
   showCallScreen(to, 'Calling...', withVideo);
   playDialTone();
@@ -180,8 +279,8 @@ export async function startCall(to, withVideo) {
   send({ type: 'call.invite', to, callId: currentCallId, video: withVideo });
 }
 
-on('call.ringing', () => {
-  $('callStatusBadge').textContent = 'Ringing...';
+on('call.ringing', (m) => {
+  $('callStatusBadge').textContent = m.pushSent ? 'Ringing (Push Alert Sent)...' : 'Ringing...';
   $('callStatusBadge').className = 'badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1';
 });
 
@@ -237,6 +336,7 @@ on('call.incoming', (m) => {
   currentCallId = m.callId;
   currentPeer = m.from;
   currentPeerName = m.name || m.from;
+  currentPeerAvatar = m.avatar || null;
   isCaller = false;
   isVideoCall = !!m.video;
   pendingCandidates = [];
@@ -245,17 +345,34 @@ on('call.incoming', (m) => {
   $('imoCallerName').textContent = currentPeerName;
   $('imoCallerNumber').textContent = currentPeer;
   $('imoCallType').textContent = m.video ? 'Incoming Video Call' : 'Incoming Voice Call';
-  $('imoCallerInitial').textContent = (currentPeerName[0] || 'V').toUpperCase();
+
+  const imoAvatarImg = $('imoCallerAvatarImg');
+  const imoCallerInit = $('imoCallerInitial');
+
+  if (currentPeerAvatar && (currentPeerAvatar.startsWith('data:image') || currentPeerAvatar.startsWith('http'))) {
+    if (imoAvatarImg) {
+      imoAvatarImg.src = currentPeerAvatar;
+      imoAvatarImg.classList.remove('d-none');
+    }
+    if (imoCallerInit) imoCallerInit.classList.add('d-none');
+  } else {
+    if (imoCallerInit) {
+      imoCallerInit.textContent = currentPeerAvatar || (currentPeerName[0] || 'V').toUpperCase();
+      imoCallerInit.classList.remove('d-none');
+    }
+    if (imoAvatarImg) imoAvatarImg.classList.add('d-none');
+  }
 
   // Show fullscreen overlay
   $('imoIncomingCallScreen').classList.remove('d-none');
   playRingtone();
 
-  // Background notification for inactive tabs
+  // Background notification trigger
   triggerIncomingCallAlert({
     callId: m.callId,
     from: m.from,
     callerName: currentPeerName,
+    callerAvatar: currentPeerAvatar,
     video: !!m.video
   });
 });
@@ -268,14 +385,21 @@ on('call.cancelled', () => {
   cleanup();
 });
 
-export async function acceptIncomingCall() {
+export async function acceptCallById(callId, from, withVideo = false) {
+  currentCallId = callId;
+  currentPeer = from;
+  currentPeerName = from;
+  isVideoCall = !!withVideo;
+  isCaller = false;
+  pendingCandidates = [];
+
   stopRingtone();
   $('imoIncomingCallScreen').classList.add('d-none');
 
   try {
     await getMedia(isVideoCall);
   } catch (err) {
-    showToast('Camera/Mic permission denied', 'error');
+    showToast('Camera/Mic permission needed', 'error');
     send({ type: 'call.reject', callId: currentCallId });
     cleanup();
     return;
@@ -283,6 +407,10 @@ export async function acceptIncomingCall() {
 
   showCallScreen(currentPeerName, 'Connecting...', isVideoCall);
   send({ type: 'call.accept', callId: currentCallId });
+}
+
+export async function acceptIncomingCall() {
+  await acceptCallById(currentCallId, currentPeer, isVideoCall);
 }
 
 export function rejectIncomingCall() {
@@ -329,6 +457,19 @@ on('webrtc.ice', async (m) => {
   }
 });
 
+// Relay peer state changes (e.g. video muted / camera toggled off)
+on('call.state', (m) => {
+  if (m.videoMuted !== undefined) {
+    setRemoteVideoVisible(!m.videoMuted);
+    const badge = $('remoteCamStatusBadge');
+    if (badge) {
+      badge.innerHTML = m.videoMuted
+        ? '<i class="bi bi-camera-video-off-fill me-1"></i> Camera is Off'
+        : '<i class="bi bi-camera-video-fill me-1"></i> Camera On';
+    }
+  }
+});
+
 // ---------------- CONTROLS & CLEANUP ----------------
 export function endCall() {
   if (currentCallId) {
@@ -368,15 +509,14 @@ function showCallScreen(title, status = 'Calling...', withVideo = false) {
   $('callTimer').textContent = '00:00';
   $('callScreen').classList.remove('d-none');
 
-  const remoteVid = $('remoteVideo');
-  const waveAnim = $('outgoingWaveAnimation');
-
   if (withVideo) {
-    remoteVid.classList.remove('d-none');
-    if (waveAnim) waveAnim.classList.add('d-none');
+    setRemoteVideoVisible(true);
+    setLocalVideoVisible(true);
   } else {
-    remoteVid.classList.add('d-none');
-    if (waveAnim) waveAnim.classList.remove('d-none');
+    setRemoteVideoVisible(false);
+    setLocalVideoVisible(false);
+    const badge = $('remoteCamStatusBadge');
+    if (badge) badge.innerHTML = '<i class="bi bi-mic-fill me-1"></i> Voice Only';
   }
 }
 
@@ -393,6 +533,16 @@ function releaseWakeLock() {
     wakeLock.release().catch(() => {});
     wakeLock = null;
   }
+}
+
+function stopScreenSharing() {
+  if (screenStream) {
+    screenStream.getTracks().forEach((t) => t.stop());
+    screenStream = null;
+  }
+  isSharingScreen = false;
+  $('btnScreenShare')?.classList.remove('btn-primary');
+  $('btnScreenShare')?.classList.add('btn-secondary');
 }
 
 function cleanup() {
@@ -421,8 +571,12 @@ function cleanup() {
 
   $('callScreen').classList.add('d-none');
   $('imoIncomingCallScreen').classList.add('d-none');
+  $('remoteAvatarView')?.classList.add('d-none');
+  $('localAvatarView')?.classList.add('d-none');
+
   currentCallId = null;
   currentPeer = null;
+  currentPeerAvatar = null;
   pendingCandidates = [];
 }
 
@@ -444,16 +598,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Camera Toggle
+  // Camera Toggle (Show Profile when camera is off)
   $('btnCam')?.addEventListener('click', () => {
     if (!localStream) return;
     const videoTrack = localStream.getVideoTracks()[0];
     if (videoTrack) {
       videoTrack.enabled = !videoTrack.enabled;
-      $('btnCam').classList.toggle('btn-secondary', videoTrack.enabled);
-      $('btnCam').classList.toggle('btn-danger', !videoTrack.enabled);
-      $('btnCam').innerHTML = `<i class="bi bi-camera-video${videoTrack.enabled ? '-fill' : '-off-fill'}"></i>`;
-      $('localVideo').style.display = videoTrack.enabled ? 'block' : 'none';
+      const isEnabled = videoTrack.enabled;
+      $('btnCam').classList.toggle('btn-secondary', isEnabled);
+      $('btnCam').classList.toggle('btn-danger', !isEnabled);
+      $('btnCam').innerHTML = `<i class="bi bi-camera-video${isEnabled ? '-fill' : '-off-fill'}"></i>`;
+
+      setLocalVideoVisible(isEnabled);
+      send({ type: 'call.state', callId: currentCallId, videoMuted: !isEnabled });
     }
   });
 
@@ -501,34 +658,24 @@ document.addEventListener('DOMContentLoaded', () => {
         isSharingScreen = true;
         $('btnScreenShare').classList.remove('btn-secondary');
         $('btnScreenShare').classList.add('btn-primary');
-        showToast('Screen sharing started', 'info');
 
-        screenTrack.onended = () => stopScreenSharing();
+        screenTrack.onended = () => {
+          stopScreenSharing();
+          if (localStream) {
+            const camTrack = localStream.getVideoTracks()[0];
+            if (sender && camTrack) sender.replaceTrack(camTrack);
+          }
+        };
       } catch (e) {
-        console.warn('Screen share cancelled or failed:', e);
+        console.warn('Screen share cancelled/failed:', e);
       }
     } else {
       stopScreenSharing();
+      if (localStream) {
+        const camTrack = localStream.getVideoTracks()[0];
+        const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
+        if (sender && camTrack) sender.replaceTrack(camTrack);
+      }
     }
   });
 });
-
-function stopScreenSharing() {
-  if (screenStream) {
-    screenStream.getTracks().forEach(t => t.stop());
-    screenStream = null;
-  }
-  isSharingScreen = false;
-  const btn = $('btnScreenShare');
-  if (btn) {
-    btn.classList.remove('btn-primary');
-    btn.classList.add('btn-secondary');
-  }
-  if (localStream && pc) {
-    const camTrack = localStream.getVideoTracks()[0];
-    const sender = pc.getSenders().find((s) => s.track && s.track.kind === 'video');
-    if (sender && camTrack) {
-      sender.replaceTrack(camTrack);
-    }
-  }
-}

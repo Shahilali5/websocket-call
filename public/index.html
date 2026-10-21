@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
   <title>VCall — Zero-Login Virtual Number Calling & Encrypted Chat</title>
+  <meta name="description" content="Instant 10-Digit Virtual Line, WebRTC HD Calling, End-to-End Encrypted Chat & Voice Notes">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/icon-192.svg">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="css/app.css" rel="stylesheet">
@@ -11,11 +18,24 @@
 <body>
 
 <div class="app-container">
+  <!-- PWA Install Banner (Mobile Promoted) -->
+  <div id="pwaInstallBanner" class="d-none bg-gradient-primary text-white px-3 py-2 d-flex align-items-center justify-content-between shadow-sm">
+    <div class="d-flex align-items-center gap-2 small">
+      <i class="bi bi-phone-fill fs-5"></i>
+      <span>Install <b>VCall</b> for background ringing & lockscreen call alerts!</span>
+    </div>
+    <div class="d-flex gap-2">
+      <button id="btnPwaBannerInstall" class="btn btn-sm btn-light fw-bold rounded-pill px-3 py-1">Install</button>
+      <button id="btnPwaBannerDismiss" class="btn btn-sm text-white-50 p-0"><i class="bi bi-x-lg"></i></button>
+    </div>
+  </div>
+
   <!-- Top App Header -->
   <header class="app-header">
     <div class="d-flex align-items-center gap-3">
-      <div id="userAvatar" class="brand-avatar">
-        V
+      <div id="userAvatar" class="brand-avatar position-relative overflow-hidden cursor-pointer" data-bs-toggle="modal" data-bs-target="#settingsModal" title="Change Profile Photo">
+        <img id="userAvatarImg" class="w-100 h-100 object-fit-cover d-none" alt="Avatar" />
+        <span id="userAvatarText">V</span>
       </div>
       <div>
         <div class="d-flex align-items-center gap-2">
@@ -34,7 +54,10 @@
         </div>
       </div>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 align-items-center">
+      <button id="btnPwaInstall" class="btn btn-sm btn-outline-success rounded-pill px-2.5 fw-semibold d-none" title="Install App on Phone">
+        <i class="bi bi-download me-1"></i> App
+      </button>
       <button class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#shareModal" title="Share My Call Line">
         <i class="bi bi-qr-code me-1"></i> Share
       </button>
@@ -166,8 +189,9 @@
       <div class="ripple-ring"></div>
       <div class="ripple-ring"></div>
       <div class="ripple-ring"></div>
-      <div class="imo-avatar" id="imoCallerInitial">
-        ?
+      <div class="imo-avatar overflow-hidden position-relative shadow-lg" id="imoCallerAvatarContainer">
+        <img id="imoCallerAvatarImg" class="w-100 h-100 object-fit-cover d-none" alt="Caller Photo" />
+        <span id="imoCallerInitial">?</span>
       </div>
     </div>
 
@@ -219,18 +243,45 @@
   </div>
 
   <!-- Outgoing Audio Call Sound Wave animation -->
-  <div id="outgoingWaveAnimation" class="position-absolute top-50 start-50 translate-middle text-center text-white" style="z-index: 2210;">
+  <div id="outgoingWaveAnimation" class="position-absolute top-50 start-50 translate-middle text-center text-white d-none" style="z-index: 2210;">
     <div class="sound-wave mb-3">
       <span></span><span></span><span></span><span></span><span></span>
     </div>
     <div class="small text-white-50">Secure Peer-to-Peer Encrypted Voice Link</div>
   </div>
 
+  <!-- Remote Profile Avatar (Displayed when Peer's camera is closed or audio call) -->
+  <div id="remoteAvatarView" class="position-absolute top-50 start-50 translate-middle text-center text-white d-none" style="z-index: 2210; width: 90%; max-width: 360px;">
+    <div class="ripple-avatar-container mb-4 mx-auto">
+      <div class="ripple-ring"></div>
+      <div class="ripple-ring"></div>
+      <div class="ripple-ring"></div>
+      <div class="imo-avatar overflow-hidden position-relative shadow-lg mx-auto" id="remoteAvatarContainer">
+        <img id="remoteAvatarImg" class="w-100 h-100 object-fit-cover d-none" alt="Peer Photo" />
+        <span id="remoteAvatarInitial" class="fs-1 fw-bold">?</span>
+      </div>
+    </div>
+    <h3 id="remotePeerNameDisplay" class="fw-bold mb-1">Connecting...</h3>
+    <p id="remotePeerNumberDisplay" class="text-white-50 font-monospace mb-2">---</p>
+    <div id="remoteCamStatusBadge" class="badge bg-dark bg-opacity-75 text-info px-3 py-1.5 rounded-pill border border-info border-opacity-25 small">
+      <i class="bi bi-camera-video-off-fill me-1"></i> Camera is Off
+    </div>
+  </div>
+
   <!-- Remote Fullscreen Video -->
   <video id="remoteVideo" autoplay playsinline></video>
 
-  <!-- Local Floating PiP Camera Preview -->
-  <video id="localVideo" autoplay playsinline muted class="position-absolute top-0 end-0 m-3 shadow-lg"></video>
+  <!-- Local Floating PiP Container (Video or Mini Profile Photo if Camera Off) -->
+  <div id="localVideoContainer" class="position-absolute top-0 end-0 m-3 shadow-lg rounded-4 overflow-hidden" style="z-index: 2230;">
+    <video id="localVideo" autoplay playsinline muted></video>
+    <div id="localAvatarView" class="d-none d-flex flex-column align-items-center justify-content-center text-white">
+      <div class="mini-pip-avatar rounded-circle overflow-hidden mb-1 shadow-sm">
+        <img id="localAvatarImg" class="w-100 h-100 object-fit-cover d-none" />
+        <span id="localAvatarInitial" class="fw-bold">Me</span>
+      </div>
+      <small class="text-white-50 fw-semibold" style="font-size: 0.65rem;">Camera Off</small>
+    </div>
+  </div>
 
   <!-- Bottom Call Controls Dock -->
   <div class="position-absolute bottom-0 start-0 w-100 pb-5 d-flex justify-content-center" style="z-index: 2240;">
@@ -413,9 +464,59 @@
           <small class="text-muted d-block">Active Line Number</small>
           <h4 id="profileNumberBadge" class="fw-bold text-primary mb-0 font-monospace">-</h4>
         </div>
+
+        <!-- Profile Photo / Avatar Section -->
+        <div class="mb-3 text-center">
+          <label class="form-label small fw-semibold text-muted d-block">Profile Photo / Avatar</label>
+          <div class="d-flex justify-content-center align-items-center mb-2">
+            <div id="settingsAvatarPreview" class="brand-avatar position-relative overflow-hidden shadow" style="width: 72px; height: 72px; border-radius: 50%; font-size: 2rem;">
+              <img id="settingsAvatarPreviewImg" class="w-100 h-100 object-fit-cover d-none" />
+              <span id="settingsAvatarPreviewText">V</span>
+            </div>
+          </div>
+
+          <!-- Upload Custom Photo from Device -->
+          <input type="file" id="avatarFileInput" accept="image/*" class="d-none">
+          <div class="d-flex justify-content-center gap-2 mb-3">
+            <button type="button" id="btnUploadAvatar" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+              <i class="bi bi-camera-fill me-1"></i> Upload Photo
+            </button>
+            <button type="button" id="btnRemoveAvatar" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+              Reset
+            </button>
+          </div>
+
+          <!-- Quick 3D Presets -->
+          <small class="text-muted d-block mb-1.5" style="font-size: 0.75rem;">Or pick an avatar:</small>
+          <div class="d-flex justify-content-center flex-wrap gap-2" id="avatarPresetContainer">
+            <button type="button" class="avatar-preset-btn" data-preset="😎">😎</button>
+            <button type="button" class="avatar-preset-btn" data-preset="🦊">🦊</button>
+            <button type="button" class="avatar-preset-btn" data-preset="🚀">🚀</button>
+            <button type="button" class="avatar-preset-btn" data-preset="⚡">⚡</button>
+            <button type="button" class="avatar-preset-btn" data-preset="👑">👑</button>
+            <button type="button" class="avatar-preset-btn" data-preset="🎧">🎧</button>
+            <button type="button" class="avatar-preset-btn" data-preset="🔥">🔥</button>
+            <button type="button" class="avatar-preset-btn" data-preset="💎">💎</button>
+          </div>
+        </div>
+
         <div class="mb-3">
           <label class="form-label small text-muted">Display Name</label>
           <input type="text" id="settingsNameInput" class="form-control rounded-3" placeholder="Your name" maxlength="50">
+        </div>
+
+        <!-- Web Push Notification Status Card -->
+        <div class="card border-0 bg-light rounded-3 p-3 mb-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fw-semibold small text-dark"><i class="bi bi-bell-fill text-primary me-1"></i> Background Call Alerts</div>
+              <small class="text-muted" style="font-size: 0.72rem;">Ring & vibrate even when browser is closed</small>
+            </div>
+            <span id="pushStatusBadge" class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1">Disabled</span>
+          </div>
+          <button type="button" id="btnTogglePush" class="btn btn-sm btn-outline-primary rounded-pill mt-2 w-100 fw-semibold">
+            <i class="bi bi-bell me-1"></i> Enable Ringing Notifications
+          </button>
         </div>
       </div>
       <div class="modal-footer border-0 pt-0">

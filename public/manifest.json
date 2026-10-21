@@ -1,0 +1,26 @@
+{
+  "name": "VCall - Encrypted Calling & Messenger",
+  "short_name": "VCall",
+  "description": "Instant 10-Digit Virtual Line, WebRTC HD Calling, End-to-End Encrypted Chat & Voice Notes",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0f19",
+  "theme_color": "#0f172a",
+  "categories": ["social", "communications", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

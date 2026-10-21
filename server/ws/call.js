@@ -1,6 +1,7 @@
 const { online, inCall, calls } = require('./state');
 const { send, sendTo } = require('./sender');
 const db = require('../db');
+const { sendPushNotification } = require('../services/push');
 
 async function isBlocked(owner, other) {
   try {
@@ -24,20 +25,32 @@ exports.handleCall = async (ws, m) => {
       if (to === me) return err('SELF');
 
       try {
-        const [u] = await db.query('SELECT name, is_banned FROM users WHERE number = ?', [to]);
+        const [u] = await db.query('SELECT name, avatar, is_banned FROM users WHERE number = ?', [to]);
         if (!u.length || u[0].is_banned) return err('NOT_FOUND');
         if (await isBlocked(to, me)) return err('BLOCKED');
-        if (!online.has(to)) return err('OFFLINE');
+
+        const isOnline = online.has(to);
+        const [subs] = await db.query('SELECT 1 FROM push_subscriptions WHERE user_number = ?', [to]);
+        const hasPush = subs && subs.length > 0;
+
+        if (!isOnline && !hasPush) return err('OFFLINE');
         if (inCall.has(to) || inCall.has(me)) return err('BUSY');
 
-        const [myUser] = await db.query('SELECT name FROM users WHERE number = ?', [me]);
+        const [myUser] = await db.query('SELECT name, avatar FROM users WHERE number = ?', [me]);
         const callerName = myUser.length ? myUser[0].name : 'Guest';
+        const callerAvatar = myUser.length ? myUser[0].avatar : null;
+        const recipientName = u[0].name || 'Guest';
+        const recipientAvatar = u[0].avatar || null;
 
         const call = {
           callId,
           from: me,
           to,
           video: !!video,
+          callerName,
+          callerAvatar,
+          recipientName,
+          recipientAvatar,
           state: 'ringing',
           startedAt: Date.now()
         };
@@ -47,14 +60,29 @@ exports.handleCall = async (ws, m) => {
         inCall.set(me, callId);
         inCall.set(to, callId);
 
-        send(ws, { type: 'call.ringing', callId });
-        sendTo(to, {
-          type: 'call.incoming',
+        send(ws, { type: 'call.ringing', callId, pushSent: hasPush });
+
+        if (isOnline) {
+          sendTo(to, {
+            type: 'call.incoming',
+            callId,
+            from: me,
+            name: callerName,
+            avatar: callerAvatar,
+            video: !!video
+          });
+        }
+
+        // Send high-priority Web Push Notification for background/lockscreen ringing
+        sendPushNotification(to, {
+          type: 'incoming_call',
           callId,
           from: me,
-          name: callerName,
+          callerName,
+          callerAvatar,
           video: !!video
-        });
+        }, { urgency: 'high', TTL: 40 });
+
       } catch (e) {
         console.error('[Call.invite] DB Error:', e);
         return err('SERVER');
@@ -119,6 +147,12 @@ async function endCall(callId, reason, status, silent = false) {
   calls.delete(callId);
   inCall.delete(c.from);
   inCall.delete(c.to);
+
+  // Clear background push notification on callee's device
+  sendPushNotification(c.to, {
+    type: 'call_cancelled',
+    callId
+  }, { urgency: 'high', TTL: 10 }).catch(() => {});
 
   if (!silent) {
     sendTo(c.from, { type: 'call.timeout', callId });
